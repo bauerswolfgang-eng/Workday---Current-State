@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workday Partnership — Status Dashboard</title>
+<style>
+  :root {
+    --blue: #1C3F8F;
+    --light-blue: #0080C8;
+    --orange: #F5A623;
+    --green: #00A651;
+    --red: #D93025;
+    --yellow: #BA7517;
+    --white: #FFFFFF;
+    --bg: #F4F7FC;
+    --dark: #222222;
+    --muted: #6B7A99;
+    --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Calibri, sans-serif;
+    background: #EEF2F8;
+    color: var(--dark);
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--blue);
+    padding: 0;
+  }
+  .header-top {
+    background: var(--blue);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 32px 12px;
+  }
+  .header-title h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--white);
+  }
+  .header-title p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 2px;
+  }
+  .header-meta {
+    text-align: right;
+  }
+  .header-meta .kw {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--orange);
+  }
+  .header-meta .date {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    margin-top: 2px;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    background: var(--blue);
+    display: flex;
+    gap: 0;
+    padding: 0 32px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .tab {
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab:hover { color: var(--white); }
+  .tab.active {
+    color: var(--white);
+    border-bottom-color: var(--orange);
+  }
+
+  /* ── MAIN ── */
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 24px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* ── KPI ROW ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: var(--card-shadow);
+    border-top: 3px solid var(--blue);
+  }
+  .kpi-val {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--blue);
+    line-height: 1;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--dark);
+    margin-top: 6px;
+  }
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 2px;
+    font-style: italic;
+  }
+  .kpi-card.orange { border-top-color: var(--orange); }
+  .kpi-card.orange .kpi-val { color: var(--orange); }
+  .kpi-card.green { border-top-color: var(--green); }
+  .kpi-card.green .kpi-val { color: var(--green); }
+
+  /* ── PARTNER CARDS ── */
+  .partner-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .partner-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+  .partner-header {
+    background: var(--blue);
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .partner-name { font-size: 13px; font-weight: 700; color: var(--white); }
+  .partner-role { font-size: 10px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  .status-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .status-yellow { background: rgba(245,166,35,0.2); color: #BA7517; }
+  .status-green { background: rgba(0,166,81,0.15); color: #00A651; }
+  .status-red { background: rgba(217,48,37,0.12); color: #D93025; }
+  .status-blue { background: rgba(0,128,200,0.15); color: #0080C8; }
+
+  .partner-body { padding: 12px 14px; }
+  .partner-item {
+    font-size: 11px;
+    color: var(--dark);
+    padding: 4px 0;
+    border-bottom: 0.5px solid #F0F3F8;
+    display: flex;
+    gap: 6px;
+    align-items: flex-start;
+  }
+  .partner-item:last-child { border-bottom: none; }
+  .partner-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .dot-open { background: var(--yellow); }
+  .dot-done { background: var(--green); }
+  .dot-blocked { background: var(--red); }
+
+  /* ── THREE COL ROW ── */
+  .three-col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .col-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+  .col-header {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #F0F3F8;
+  }
+  .col-header.green { color: var(--green); background: #F0FBF5; }
+  .col-header.blue { color: var(--light-blue); background: #EAF4FB; }
+  .col-header.red { color: var(--red); background: #FEF0EF; }
+  .col-header.orange { color: var(--yellow); background: #FEF8EC; }
+  .col-header.purple { color: #534AB7; background: #F0EFFD; }
+  .col-body { padding: 10px 14px; }
+  .col-item {
+    font-size: 11px;
+    color: var(--dark);
+    padding: 5px 0;
+    border-bottom: 0.5px solid #F4F6FA;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .col-item:last-child { border-bottom: none; }
+  .col-item .owner {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--white);
+    background: var(--blue);
+    padding: 1px 6px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .col-item .owner.orange { background: var(--orange); color: var(--white); }
+  .col-item .owner.red { background: var(--red); }
+  .col-item .owner.green { background: var(--green); }
+
+  /* ── CHALLENGE CARDS ── */
+  .challenge-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .challenge-card {
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    border-left: 4px solid var(--red);
+    padding: 14px 16px;
+  }
+  .challenge-card.yellow { border-left-color: var(--yellow); }
+  .challenge-card.blue { border-left-color: var(--light-blue); }
+  .challenge-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 6px;
+  }
+  .challenge-text {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .challenge-owner {
+    margin-top: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--blue);
+  }
+
+  /* ── PANEL VISIBILITY ── */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 10px;
+    color: var(--muted);
+    border-top: 1px solid #E0E6F0;
+    margin-top: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .kpi-row, .partner-row, .three-col, .challenge-row { grid-template-columns: 1fr 1fr; }
+    main { padding: 16px; }
+    .header-top { padding: 12px 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+    .tabs { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  HIER PFLEGST DU DAS DASHBOARD — NUR DIESEN BLOCK ÄNDERN
+// ═══════════════════════════════════════════════════════
+
+const DATA = {
+
+  // Kopfzeile
+  kw: "KW 31",
+  datum: "30. Juli 2026",
+  owner: "Wolfgang Bauer",
+
+  // ── KPIs ──────────────────────────────────────────────
+  kpis: [
+    { val: "16",     label: "Workday-Kunden",          sub: "aktive Deployments",         class: "" },
+    { val: "€550k",  label: "Pipeline-Wert",            sub: "Workday Opportunities",      class: "orange" },
+    { val: "3",      label: "Aktive Partner-Gespräche", sub: "SI · Strada · HR Path",      class: "" },
+    { val: "€30M",   label: "ARR-Ziel 2028",            sub: "aconso Workday ARR",         class: "green" },
+  ],
+
+  // ── PARTNER STATUS ─────────────────────────────────────
+  partner: [
+    {
+      name: "SI (SHAPEiN)",
+      role: "Connector & Technologie-Partner",
+      status: "In Verhandlung", statusClass: "status-yellow",
+      items: [
+        { text: "Persönliches Treffen München — Termin ausstehend", dot: "dot-open" },
+        { text: "Flex Credits: Integration Events herausgenommen ✅", dot: "dot-done" },
+        { text: "NDA: noch nicht unterzeichnet", dot: "dot-open" },
+        { text: "Timeline MVP Connector: offen", dot: "dot-open" },
+        { text: "Battle Card vs. Kainos: in Arbeit", dot: "dot-open" },
+      ]
+    },
+    {
+      name: "Strada",
+      role: "Resell & Implementierungspartner",
+      status: "Gespräch aktiv", statusClass: "status-yellow",
+      items: [
+        { text: "Meeting mit Oya Yavsan — Donnerstag ✅", dot: "dot-done" },
+        { text: "JP Janssen (VP) — noch kein Termin", dot: "dot-open" },
+        { text: "NF 461 Frankreich — in Klärung", dot: "dot-open" },
+        { text: "Erster Pilot-Kunde — noch offen", dot: "dot-open" },
+        { text: "Top-down Commitment — ausstehend", dot: "dot-open" },
+      ]
+    },
+    {
+      name: "Workday",
+      role: "Plattform-Partner",
+      status: "Silver Partner", statusClass: "status-blue",
+      items: [
+        { text: "Matt Schupp — Kontakt hergestellt", dot: "dot-done" },
+        { text: "Design Approved Badge — noch offen", dot: "dot-open" },
+        { text: "Gold/Platinum Weg — in Planung", dot: "dot-open" },
+        { text: "Workday Rising Barcelona — Nov 2026", dot: "dot-open" },
+        { text: "Sales Partner Status — aktiv seit 08.06. ✅", dot: "dot-done" },
+      ]
+    },
+  ],
+
+  // ── STRATEGISCH: Was passiert / Nächste Schritte / Für CEO+CRO+CTO ──
+  strategisch: {
+    passiert: [
+      { text: "Partner Summit DACH Köln — sehr erfolgreich", owner: "W" },
+      { text: "Gespräche mit Strada, SI, Accenture, Deloitte, HR Path", owner: "W" },
+      { text: "Flex Credits: Integration Events kostenfrei — SI-Connector entlastet", owner: "W" },
+      { text: "LinkedIn-Posts: Ankündigung + Recap publiziert", owner: "W" },
+    ],
+    naechste: [
+      { text: "SI München — persönliches Treffen + NDA", owner: "W + FZ" },
+      { text: "Strada Oya Meeting Donnerstag", owner: "W" },
+      { text: "JP Janssen (Strada VP) — Termin auf C-Level", owner: "FZ + OH" },
+      { text: "Matt Schupp (Workday) — Platinum-Pfad besprechen", owner: "W" },
+    ],
+    brauche: [
+      { text: "Olaf: Anruf bei JP Janssen (Strada) — top-down Commitment", owner: "OH", ownerClass: "red" },
+      { text: "Florian: SI Termin München bestätigen", owner: "FZ", ownerClass: "orange" },
+      { text: "Dominik: Bundle-Paket (~€5) definieren", owner: "DB", ownerClass: "orange" },
+    ],
+  },
+
+  // ── OPERATIV: Produkt / Marketing / Anforderungen ──
+  operativ: {
+    produkt: [
+      { text: "Bundle-Paket ~€5 definieren: Akte + Docs + AI + SI Connector", owner: "DB" },
+      { text: "NF 461 Gap-Analyse: Was muss am System angepasst werden?", owner: "DB" },
+      { text: "Oberflächenintegration Workday: Tiefe definieren", owner: "DB + Alex" },
+      { text: "AI Tools aus Hackathon: Wann produktionsreif?", owner: "DB" },
+    ],
+    marketing: [
+      { text: "LinkedIn: wöchentliche Content-Kadenz aufbauen", owner: "W + H" },
+      { text: "Workday Rising Barcelona (Nov) — Teilnahme bestätigen", owner: "H" },
+      { text: "GTM Assets: One Pager, Battle Card, Demo Video", owner: "H + W" },
+      { text: "Workday Marketplace Listing — Design Approved Badge Voraussetzung", owner: "H" },
+    ],
+    anforderungen: [
+      { text: "Strada (FR): NF 461 Zertifizierung — Make or Break für Frankreich", owner: "DB + Legal" },
+      { text: "Strada: Plug & Play — max. 1-2 Tage Implementierung", owner: "DB" },
+      { text: "SI: Kein Custom-Build — fertiger Standard-Connector", owner: "DB + Alex" },
+      { text: "International: USA/UK Preislogik (min. 3x Deutschland)", owner: "OH + FZ" },
+    ],
+  },
+
+  // ── HERAUSFORDERUNGEN ──────────────────────────────────
+  challenges: [
+    {
+      title: "Strada antwortet nicht",
+      text: "Oya und JP Janssen schwer zu erreichen. Kein top-down Commitment bisher. Ohne das skaliert die Partnerschaft nicht.",
+      owner: "→ Olaf/Florian direkt einschalten",
+      class: ""
+    },
+    {
+      title: "SI — Stillstand im Urlaub",
+      text: "Björn war 2 Wochen in Norwegen. Internes Alignment bei aconso noch unklar: Was soll SI genau bauen? Bis wann?",
+      owner: "→ Termin München sofort fixieren",
+      class: "yellow"
+    },
+    {
+      title: "NF 461 / Frankreich offen",
+      text: "Für Strada-Kunden in Frankreich (z.B. ID Logistics) ist NF 461 ein Make-or-Break. AFNOR kontaktiert, Dominik informiert. Eigenentwicklung: 12–18 Monate.",
+      owner: "→ Dominik: Gap-Analyse starten",
+      class: "blue"
+    },
+    {
+      title: "Kein Design Approved Badge",
+      text: "Voraussetzung für Gold und Marketplace-Listing. Use Case, Architektur und Data Mapping müssen dokumentiert werden. Noch nicht gestartet.",
+      owner: "→ Alex + Dominik: jetzt starten",
+      class: ""
+    },
+    {
+      title: "Bundle-Preis nicht definiert",
+      text: "Ziel ~€5/User/Month ist gesetzt, aber Inhalt des Bundles noch unklar. Welche Produkte, welche AI-Tools, Audit & Compliance rein?",
+      owner: "→ Dominik + Olaf: diese Woche",
+      class: "yellow"
+    },
+    {
+      title: "Internes Alignment fehlt",
+      text: "Workday-Thema kommt von Wolfgang weg. Sales, Product und Consulting sind nicht vollständig aligned. Wer ist intern für welchen Teil verantwortlich?",
+      owner: "→ JP: GTM-Struktur definieren",
+      class: "blue"
+    },
+  ],
+
+};
+// ═══════════════════════════════════════════════════════
+//  ENDE DATEN-BLOCK — ab hier nichts ändern
+// ═══════════════════════════════════════════════════════
+</script>
+
+<header>
+  <div class="header-top">
+    <div class="header-title">
+      <h1>Workday Partnership — Status Dashboard</h1>
+      <p id="meta-owner"></p>
+    </div>
+    <div class="header-meta">
+      <div class="kw" id="meta-kw"></div>
+      <div class="date" id="meta-date"></div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="showPanel('strategisch', this)">📊 Strategisch</div>
+    <div class="tab" onclick="showPanel('operativ', this)">⚙️ Operativ</div>
+    <div class="tab" onclick="showPanel('challenges', this)">🔴 Herausforderungen</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPI ROW -->
+  <div class="section-label">Kennzahlen</div>
+  <div class="kpi-row" id="kpi-row"></div>
+
+  <!-- PARTNER STATUS -->
+  <div class="section-label">Partner-Status</div>
+  <div class="partner-row" id="partner-row"></div>
+
+  <!-- STRATEGISCH PANEL -->
+  <div class="panel active" id="panel-strategisch">
+    <div class="section-label">Strategisch — für CEO · CRO · CTO</div>
+    <div class="three-col" id="strat-cols"></div>
+  </div>
+
+  <!-- OPERATIV PANEL -->
+  <div class="panel" id="panel-operativ">
+    <div class="section-label">Operativ — für Head of Product · Head of Marketing & Alliances</div>
+    <div class="three-col" id="op-cols"></div>
+  </div>
+
+  <!-- CHALLENGES PANEL -->
+  <div class="panel" id="panel-challenges">
+    <div class="section-label">Aktuelle Herausforderungen & Engpässe</div>
+    <div class="challenge-row" id="challenge-row"></div>
+  </div>
+
+</main>
+
+<footer id="footer"></footer>
+
+<script>
+function showPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+}
+
+function buildDot(cls) {
+  return `<span class="dot ${cls}"></span>`;
+}
+
+function buildOwnerBadge(owner, cls) {
+  return `<span class="owner ${cls||''}">${owner}</span>`;
+}
+
+// Header
+document.getElementById('meta-kw').textContent = DATA.kw;
+document.getElementById('meta-date').textContent = 'Stand: ' + DATA.datum;
+document.getElementById('meta-owner').textContent = 'Owner: ' + DATA.owner;
+document.getElementById('footer').textContent = `aconso AG · Workday Partnership Dashboard · ${DATA.kw} ${DATA.datum} · Vertraulich`;
+
+// KPIs
+const kpiRow = document.getElementById('kpi-row');
+DATA.kpis.forEach(k => {
+  kpiRow.innerHTML += `
+    <div class="kpi-card ${k.class}">
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`;
+});
+
+// Partner
+const partnerRow = document.getElementById('partner-row');
+DATA.partner.forEach(p => {
+  const items = p.items.map(i =>
+    `<div class="partner-item">${buildDot(i.dot)}<span>${i.text}</span></div>`
+  ).join('');
+  partnerRow.innerHTML += `
+    <div class="partner-card">
+      <div class="partner-header">
+        <div>
+          <div class="partner-name">${p.name}</div>
+          <div class="partner-role">${p.role}</div>
+        </div>
+        <span class="status-badge ${p.statusClass}">${p.status}</span>
+      </div>
+      <div class="partner-body">${items}</div>
+    </div>`;
+});
+
+// Strategisch
+const stratCols = document.getElementById('strat-cols');
+const stratDefs = [
+  { title: '✅ Was ist passiert', headerClass: 'green', items: DATA.strategisch.passiert },
+  { title: '▶ Nächste Schritte', headerClass: 'blue', items: DATA.strategisch.naechste },
+  { title: '🔴 Was ich brauche', headerClass: 'red', items: DATA.strategisch.brauche },
+];
+stratDefs.forEach(col => {
+  const items = col.items.map(i =>
+    `<div class="col-item">${buildOwnerBadge(i.owner, i.ownerClass)}<span>${i.text}</span></div>`
+  ).join('');
+  stratCols.innerHTML += `
+    <div class="col-card">
+      <div class="col-header ${col.headerClass}">${col.title}</div>
+      <div class="col-body">${items}</div>
+    </div>`;
+});
+
+// Operativ
+const opCols = document.getElementById('op-cols');
+const opDefs = [
+  { title: '📦 Produkt-Anforderungen', headerClass: 'purple', items: DATA.operativ.produkt },
+  { title: '📣 Marketing & Sichtbarkeit', headerClass: 'orange', items: DATA.operativ.marketing },
+  { title: '🤝 Was Partner brauchen', headerClass: 'blue', items: DATA.operativ.anforderungen },
+];
+opDefs.forEach(col => {
+  const items = col.items.map(i =>
+    `<div class="col-item">${buildOwnerBadge(i.owner, i.ownerClass)}<span>${i.text}</span></div>`
+  ).join('');
+  opCols.innerHTML += `
+    <div class="col-card">
+      <div class="col-header ${col.headerClass}">${col.title}</div>
+      <div class="col-body">${items}</div>
+    </div>`;
+});
+
+// Challenges
+const challengeRow = document.getElementById('challenge-row');
+DATA.challenges.forEach(c => {
+  challengeRow.innerHTML += `
+    <div class="challenge-card ${c.class}">
+      <div class="challenge-title">${c.title}</div>
+      <div class="challenge-text">${c.text}</div>
+      <div class="challenge-owner">${c.owner}</div>
+    </div>`;
+});
+</script>
+
+</body>
+</html>
